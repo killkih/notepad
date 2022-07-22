@@ -22,27 +22,39 @@ OptionParser.new do |opt|
 
 end.parse!
 
-result = Post.find(options[:limit], options[:type], options[:id])
+result = if options[:id].nil?
+            Post.find_all(options[:limit], options[:type])
+        else
+            Post.find_by_id(options[:id])
+        end
 
 if result.is_a? Post
     puts "Запись #{result.class.name}, id = #{options[:id]}"
 
-    result.to_strings.each do |line|
-        puts line
-    end
-
-
-else # показываем таблицу результатов
-
-    print "| id\t| @type\t|  @created_at\t\t\t|  @text \t\t\t| @url\t\t| @due_date \t "
+    result.to_strings.each {|line| puts line }
+else
+    print '|id                  '
+    print '|@type               '
+    print '|@created_at         '
+    print '|@text               '
+    print '|@url                '
+    print '|@due_date           '
+    print '|'
 
     result.each do |row|
-      puts
-      # puts '_'*80
-      row.each do |element|
-        print "|  #{element.to_s.delete("\\n\\r")[0..40]}\t"
-      end
+        puts
+
+        row.each do |element|
+            element_text = "#{element.to_s.delete("\n\r")[0..17]}"
+            element_text << ' ' * (21 - element_text.size)
+            print element_text
+        end
+
+        print '|'
     end
+
+    puts
 end
 
-puts
+
+
