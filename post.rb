@@ -18,7 +18,15 @@ class Post
 
     db = SQLite3::Database.open(@@SQLITE_DB_FILE)
     db.results_as_hash = true
-    result = db.execute("SELECT * FROM posts WHERE rowid = ?", id)
+    begin
+
+      result = db.execute("SELECT * FROM posts WHERE rowid = ?", id)
+
+    rescue SQLite3::SQLException => error
+
+      abort "Файл с базой данных не найден!" + error.message
+
+    end
     db.close
 
     return nil if result.empty?
@@ -42,8 +50,15 @@ class Post
     query += "ORDER by rowid DESC "
     query += "LIMIT :limit " unless limit.nil?
 
-    statement = db.prepare(query)
+    begin
 
+      statement = db.prepare(query)
+
+    rescue SQLite3::SQLException => error
+
+      abort "Файл с базой данных не найден" + error.message
+
+    end
     statement.bind_param('type', type) unless type.nil?
     statement.bind_param('limit', limit) unless limit.nil?
 
@@ -94,6 +109,8 @@ class Post
   def save_to_db
     db = SQLite3::Database.open(@@SQLITE_DB_FILE)
     db.results_as_hash = true
+    begin
+
 
     db.execute("INSERT INTO posts (" +
        to_db_hash.keys.join(',') +
@@ -101,7 +118,10 @@ class Post
        ('?,'*to_db_hash.keys.size).chomp(',') +
         ")",
         to_db_hash.values)
+    rescue SQLite3::SQLException => error
+      abort "Файл с базой данных не найден!" + error.message
 
+    end
     insert_row_id = db.last_insert_row_id
 
     db.close
